@@ -1,1 +1,3 @@
-SELECT
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'company_db';
