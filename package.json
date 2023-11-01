@@ -9,5 +9,8 @@
   },
   "author": "",
   "license": "ISC",
-  "keywords": []
+  "keywords": [],
+  "dependencies": {
+    "console.table": "^0.10.0"
+  }
 }
