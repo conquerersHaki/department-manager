@@ -37,8 +37,6 @@ const userPrompt = () => {
           "Add a department",
           "Add a role",
           "Add an employee",
-          "Update an employee role",
-          "Update an employee manager",
           "Delete a department",
           "Delete a role",
           "Delete an employee",
