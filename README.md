@@ -36,7 +36,7 @@ SO THAT I can organize and plan my business
 
 ![screenshot 1](./assets/SS1.jpg)
 
-`Link to walkthrough video:  https://drive.google.com/file/d/1GM-f3Cw7xgwebHzFr8-WA3PFNWcTolmp/view?usp=drive_link`
+`Link to walkthrough video:  https://drive.google.com/file/d/1SzUO_hdwkNaZg6xVytoL1V8AS05cVTMI/view?usp=sharing`
 
 ---
 
