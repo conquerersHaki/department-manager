@@ -1,13 +1,12 @@
-//importing necessities
+// Importing necessities
 const mysql = require("mysql2");
-
 const inquirer = require("inquirer");
-
-//middleware
-const PORT = process.env.PORT || 3001;
 const consTable = require("console.table");
 
-//creating connection to database
+// Middleware
+const PORT = process.env.PORT || 3001;
+
+// Creating connection to database
 const connection = mysql.createConnection({
   host: "localhost",
   port: 3306,
@@ -19,11 +18,11 @@ const connection = mysql.createConnection({
 connection.connect(function (err) {
   if (err) throw err;
   console.log("Connected as Id" + connection.threadId);
-  userPrompt();
+  initiateUserPrompt();
 });
 
-//prompt for user input
-const userPrompt = () => {
+// Prompt for user input
+const initiateUserPrompt = () => {
   inquirer
     .prompt([
       {
@@ -45,63 +44,72 @@ const userPrompt = () => {
     ])
     .then((answers) => {
       const { choices } = answers;
-
-      if (choices === "View all departments") {
-        showDepartments();
-      }
-      if (choices === "View all roles") {
-        showRoles();
-      }
-      if (choices === "View all employees") {
-        showEmployees();
-      }
-      if (choices === "Add a department") {
-        addDepartment();
-      }
-      if (choices === "Add a role") {
-        addRole();
-      }
-      if (choices === "Add an employee") {
-        addEmployee();
-      }
-      if (choices === "Delete a department") {
-        deleteDepartment();
-      }
-      if (choices === "Delete a role") {
-        deleteRole();
-      }
-      if (choices === "Delete an employee") {
-        deleteEmployee();
-      }
+      handleUserChoice(choices);
     });
 };
 
-//show all departments
-showDepartments = () => {
+// Handling user choices
+const handleUserChoice = (userChoice) => {
+  switch (userChoice) {
+    case "View all departments":
+      displayDepartments();
+      break;
+    case "View all roles":
+      displayRoles();
+      break;
+    case "View all employees":
+      displayEmployees();
+      break;
+    case "Add a department":
+      addNewDepartment();
+      break;
+    case "Add a role":
+      addNewRole();
+      break;
+    case "Add an employee":
+      addNewEmployee();
+      break;
+    case "Delete a department":
+      removeDepartment();
+      break;
+    case "Delete a role":
+      removeRole();
+      break;
+    case "Delete an employee":
+      removeEmployee();
+      break;
+    default:
+      console.log("Invalid choice. Please try again.");
+      initiateUserPrompt();
+  }
+};
+
+// Show all departments
+const displayDepartments = () => {
   console.log("All departments...\n");
   const sql = `SELECT department.id AS id, department.department_name AS department FROM department`;
 
   connection.query(sql, (err, rows) => {
     if (err) throw err;
     console.table(rows);
-    userPrompt();
+    initiateUserPrompt();
   });
 };
 
-//show all roles
-showRoles = () => {
+// Show all roles
+const displayRoles = () => {
   console.log("All roles...\n");
   const sql = `SELECT role.id, role.title, department.department_name AS department FROM role INNER JOIN department ON role.department_id = department.id`;
 
   connection.query(sql, (err, rows) => {
     if (err) throw err;
     console.table(rows);
-    userPrompt();
+    initiateUserPrompt();
   });
 };
 
-//show all employees
-showEmployees = () => {
+// Show all employees
+const displayEmployees = () => {
   console.log("All employees...\n");
   const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.department_name AS department, role.salary, CONCAT (manager.first_name, " ", manager.last_name) AS manager 
     FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee manager ON manager.id = employee.manager_id`;
@@ -109,68 +117,46 @@ showEmployees = () => {
   connection.query(sql, (err, rows) => {
     if (err) throw err;
     console.table(rows);
-    userPrompt();
+    initiateUserPrompt();
   });
 };
 
-//add a department
-addDepartment = () => {
+// Add a department
+const addNewDepartment = () => {
   inquirer
     .prompt([
       {
         type: "input",
         name: "addDepartment",
-        message: "What department would you like you add?",
-        validate: (addDepartment) => {
-          if (addDepartment) {
-            return true;
-          } else {
-            console.log("Please enter the department");
-            return false;
-          }
-        },
+        message: "What department would you like to add?",
+        validate: (addDepartment) => (addDepartment ? true : "Please enter the department"),
       },
     ])
     .then((answer) => {
-      const sql = `INSERT INTO department (department_name)
-                    VALUES (?)`;
+      const sql = `INSERT INTO department (department_name) VALUES (?)`;
       connection.query(sql, answer.addDepartment, (err, result) => {
         if (err) throw err;
         console.log("Added " + answer.addDepartment + " to departments");
-
-        showDepartments();
+        displayDepartments();
       });
     });
 };
 
-//adding a role
-addRole = () => {
+// Add a role
+const addNewRole = () => {
   inquirer
     .prompt([
       {
         type: "input",
         name: "addRole",
         message: "What role would you like to add?",
-        validate: (addRole) => {
-          if (addRole) {
-            return true;
-          } else {
-            console.log("Please enter a role");
-            return false;
-          }
-        },
+        validate: (addRole) => (addRole ? true : "Please enter a role"),
       },
       {
         type: "input",
         name: "salary",
         message: "What is the salary for this role?",
-        validate: (addSalary) => {
-          if (isNaN(addSalary)) {
-            console.log("Please enter a salary");
-          } else {
-            return true;
-          }
-        },
+        validate: (addSalary) => (isNaN(addSalary) ? "Please enter a valid salary" : true),
       },
     ])
     .then((answer) => {
@@ -180,7 +166,7 @@ addRole = () => {
 
       connection.query(roleSql, (err, data) => {
         if (err) throw err;
-        const dept = data.map(({ name, id }) => ({ name: name, value: id }));
+        const dept = data.map(({ department_name, id }) => ({ name: department_name, value: id }));
 
         inquirer
           .prompt([
@@ -192,54 +178,39 @@ addRole = () => {
             },
           ])
           .then((deptChoice) => {
-            const dept = deptChoice.dept;
-            params.push(dept);
-            const sql = `INSERT INTO role (title, salary, department_id)
-                            VALUES (?, ?, ?)`;
+            const selectedDeptId = deptChoice.dept;
+            params.push(selectedDeptId);
+            const sql = `INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)`;
             connection.query(sql, params, (err, result) => {
               if (err) throw err;
-              console.log("Added" + answer.addRole + " to roles");
-              showRoles;
-              userPrompt();
+              console.log("Added " + answer.addRole + " to roles");
+              displayRoles();
             });
           });
       });
     });
 };
 
-//add an employee
-addEmployee = () => {
+// Add an employee
+const addNewEmployee = () => {
   inquirer
     .prompt([
       {
         type: "input",
         name: "firstName",
         message: "What is the first name of the employee?",
-        validate: (addFName) => {
-          if (addFName) {
-            return true;
-          } else {
-            console.log("please add a name");
-            return false;
-          }
-        },
+        validate: (addFName) => (addFName ? true : "Please add a name"),
       },
       {
         type: "input",
         name: "lastName",
         message: "And what is their last name?",
-        validate: (addLName) => {
-          if (addLName) {
-            return true;
-          } else {
-            console.log("Please enter a last name");
-            return false;
-          }
-        },
+        validate: (addLName) => (addLName ? true : "Please enter a last name"),
       },
     ])
     .then((answer) => {
       const params = [answer.firstName, answer.lastName];
+
       const roleSql = `SELECT role.id, role.title FROM role`;
 
       connection.query(roleSql, (err, data) => {
@@ -257,8 +228,8 @@ addEmployee = () => {
             },
           ])
           .then((roleChoice) => {
-            const role = roleChoice.role;
-            params.push(role);
+            const selectedRoleId = roleChoice.role;
+            params.push(selectedRoleId);
 
             const managerSql = `SELECT * FROM employee`;
 
@@ -280,17 +251,15 @@ addEmployee = () => {
                   },
                 ])
                 .then((managerChoice) => {
-                  const manager = managerChoice.manager;
-                  params.push(manager);
+                  const selectedManagerId = managerChoice.manager;
+                  params.push(selectedManagerId);
 
-                  const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id)
-                                    VALUES (?, ?, ?, ?)`;
+                  const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`;
 
                   connection.query(sql, params, (err, result) => {
                     if (err) throw err;
                     console.log("Employee added to the company database");
-
-                    showEmployees();
+                    displayEmployees();
                   });
                 });
             });
@@ -299,14 +268,14 @@ addEmployee = () => {
     });
 };
 
-//delete department
-deleteDepartment = () => {
+// Delete a department
+const removeDepartment = () => {
   const deptSql = `SELECT * FROM department`;
 
   connection.query(deptSql, (err, data) => {
     if (err) throw err;
 
-    const dept = data.map(({ name, id }) => ({ name: name, value: id }));
+    const dept = data.map(({ department_name, id }) => ({ name: department_name, value: id }));
 
     inquirer
       .prompt([
@@ -318,21 +287,20 @@ deleteDepartment = () => {
         },
       ])
       .then((deptChoice) => {
-        const dept = deptChoice.dept;
+        const selectedDeptId = deptChoice.dept;
         const sql = `DELETE FROM department WHERE id = ?`;
 
-        connection.query(sql, dept, (err, result) => {
+        connection.query(sql, selectedDeptId, (err, result) => {
           if (err) throw err;
           console.log("Department deleted");
-
-          showDepartments();
+          displayDepartments();
         });
       });
   });
 };
 
-//delete role
-deleteRole = () => {
+// Delete a role
+const removeRole = () => {
   const roleSql = `SELECT * FROM role`;
 
   connection.query(roleSql, (err, data) => {
@@ -350,21 +318,20 @@ deleteRole = () => {
         },
       ])
       .then((roleChoice) => {
-        const role = roleChoice.role;
+        const selectedRoleId = roleChoice.role;
         const sql = `DELETE FROM role WHERE id = ?`;
 
-        connection.query(sql, role, (err, result) => {
+        connection.query(sql, selectedRoleId, (err, result) => {
           if (err) throw err;
           console.log("Role deleted");
-
-          showRoles();
+          displayRoles();
         });
       });
   });
 };
 
-//delete employees
-deleteEmployee = () => {
+// Delete an employee
+const removeEmployee = () => {
   const empSql = `SELECT * FROM employee`;
 
   connection.query(empSql, (err, data) => {
@@ -385,16 +352,13 @@ deleteEmployee = () => {
         },
       ])
       .then((employeeChoice) => {
-        const { employee } = employeeChoice;
-        console.log(employeeChoice);
+        const selectedEmployeeId = employeeChoice.employee;
         const sql = `DELETE FROM employee WHERE id = ?`;
-        console.log(employee);
 
-        connection.query(sql, employee, (err, result) => {
+        connection.query(sql, selectedEmployeeId, (err, result) => {
           if (err) throw err;
           console.log("Employee deleted");
-
-          showEmployees();
+          displayEmployees();
         });
       });
   });
